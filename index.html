@@ -66,7 +66,7 @@ input:checked + .slider:before { transform: translateX(22px); }
   </div>
 
   <div class="field">
-    <label>Campaign Code (4 cifre, valgfri)</label>
+    <label>Kampagnekode (4 cifre, valgfri)</label>
     <input type="text" x-model="campaigncode" placeholder="Fx: 2025"
            @input="campaigncode = campaigncode.replace(/\D/g,'').slice(0,4).trim()">
     <span class="tooltip">Kun 4 cifre tilladt, ingen mellemrum</span>
@@ -143,7 +143,7 @@ function utmBuilder() {
     kanal:'email',
     kampagne:'',
     indhold:'',
-    campaigncode:'', // <-- max 4 digits
+    campaigncode:'', 
     anker:'',
     flereVersioner:false,
     antalVersioner:3,
@@ -165,7 +165,7 @@ function utmBuilder() {
       Object.entries(parametre).forEach(([k,v])=>{
         if(v && !url.searchParams.has(k)) url.searchParams.set(k,v);
       });
-      if(this.campaigncode) url.searchParams.set('campaigncode', this.campaigncode); // add campaigncode
+      if(this.campaigncode) url.searchParams.set('campaigncode', this.campaigncode); 
       if(anker) url.hash=anker;
       return url.toString();
     },
