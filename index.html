@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>UTM Builder Pro - Alpine</title>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.0/dist/cdn.min.js" defer></script>
+<style>
+body { font-family: 'Segoe UI', Arial, sans-serif; margin:20px; background:#fafafa; color:#1e1e1e; }
+.app { max-width:900px; margin:auto; padding:30px; background:white; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.08); border-top:6px solid #e30613; }
+h2 { margin-bottom:20px; color:#e30613; font-size:26px; font-weight:700; text-transform:uppercase; }
+.field { display:flex; flex-direction:column; margin-top:12px; }
+label { font-weight:600; color:#333; margin-bottom:6px; }
+input, select { width:100%; padding:12px; border:1px solid #ddd; border-radius:6px; font-size:15px; box-sizing:border-box; }
+input:focus, select:focus { outline:none; border-color:#e30613; box-shadow:0 0 0 2px rgba(227,6,19,0.2); }
+button { padding:10px 16px; border:none; border-radius:6px; background:#e30613; color:white; cursor:pointer; font-weight:600; font-size:14px; transition:0.2s; margin-top:12px; }
+button:hover { background:#c20511; }
+button.secondary { background:#444; margin-left:6px; }
+button.secondary:hover { background:#222; }
+table { width:100%; border-collapse: collapse; margin-top:25px; font-size:14px; border-radius:8px; overflow:hidden; }
+th, td { border:1px solid #e5e7eb; padding:12px; text-align:left; vertical-align:middle; }
+th { background:#f9f9f9; font-weight:600; color:#111; }
+.link-row:nth-child(even){ background:#fdfdfd; }
+.version-input { width:90px; }
+.switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+.switch input { display:none; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: #e30613; }
+input:checked + .slider:before { transform: translateX(22px); }
+.tooltip { font-size:12px; color:#666; margin-top:4px; display:block; }
+.notifikation { position: fixed; bottom: 20px; right: 20px; background: #e30613; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 14px; opacity: 0; transition: opacity 0.3s ease; z-index: 9999; }
+.notifikation.show { opacity: 1; }
+.section-toggle { border:1px solid #e5e7eb; border-radius:8px; padding:16px; display:flex; justify-content:space-between; align-items:center; margin-top:20px; background:#fff; flex-wrap:wrap; gap:10px;}
+</style>
+</head>
+<body>
+<div class="app" x-data="utmBuilder()">
+  <h2>MSF UTM BUILDER</h2>
+
+  <div class="field">
+    <label>Basis-URL</label>
+    <input type="url" x-model="basisUrl" placeholder="Fx: msf.dk/stoet/gaza" required>
+  </div>
+
+  <div class="field">
+    <label>Kanal</label>
+    <select x-model="kanal">
+      <option value="email">E-mail</option>
+      <option value="sms">SMS</option>
+      <option value="meta">Meta</option>
+      <option value="facebook">Facebook</option>
+      <option value="instagram">Instagram</option>
+      <option value="google_ads">Google Ads</option>
+      <option value="ms_ads">Microsoft Ads</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Kampagne (utm_campaign)</label>
+    <input type="text" x-model="kampagne" placeholder="2025-gaza" required>
+  </div>
+
+  <div class="field">
+    <label>Indhold (utm_content, valgfri)</label>
+    <input type="text" x-model="indhold" placeholder="bannerA, heroCTA">
+  </div>
+
+  <div class="field">
+    <label>Anker (valgfri)</label>
+    <select x-model="anker">
+      <option value="">Intet</option>
+      <option value="video">Video</option>
+      <option value="topbanner">Topbanner</option>
+      <option value="footer">Footer</option>
+      <option value="gvform">Gravity form</option>
+    </select>
+  </div>
+
+  <div class="section-toggle">
+    <label style="font-weight:600;">Opret flere versioner</label>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label class="switch">
+        <input type="checkbox" x-model="flereVersioner">
+        <span class="slider"></span>
+      </label>
+      <input class="version-input" type="number" x-model.number="antalVersioner" min="1" x-show="flereVersioner">
+    </div>
+  </div>
+  <span class="tooltip" x-show="flereVersioner">Genererer flere links med nummereret <code>utm_content</code></span>
+
+  <button @click="genererLinks()">Generér links</button>
+  <button class="secondary" @click="kopierAlle()" x-show="links.length">Kopiér alle</button>
+  <button class="secondary" @click="downloadCSV()" x-show="links.length">Download CSV</button>
+
+  <table x-show="links.length">
+    <thead>
+      <tr>
+        <th>Endelig URL</th>
+        <th>utm_source</th>
+        <th>utm_medium</th>
+        <th>utm_campaign</th>
+        <th>utm_content</th>
+        <th>Anker</th>
+        <th>Handlinger</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template x-for="(link, idx) in links" :key="idx">
+        <tr class="link-row">
+          <td style="word-break:break-all" x-text="link.url"></td>
+          <td x-text="link.utm_source"></td>
+          <td x-text="link.utm_medium"></td>
+          <td x-text="link.utm_campaign"></td>
+          <td x-text="link.utm_content || ''"></td>
+          <td x-text="link.anker || ''"></td>
+          <td>
+            <div style="display:inline-flex; gap:6px;">
+              <button @click="kopier(link)">Kopiér</button>
+              <button class="secondary" @click="aabn(link.url)">Åbn</button>
+            </div>
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+
+  <div class="notifikation" :class="{show: visNotifikation}" x-text="notifikationBesked"></div>
+</div>
+
+<script>
+function utmBuilder() {
+  return {
+    basisUrl:'',
+    kanal:'email',
+    kampagne:'',
+    indhold:'',
+    anker:'',
+    flereVersioner:false,
+    antalVersioner:3,
+    links:[],
+    visNotifikation:false,
+    notifikationBesked:'',
+    kanalMap:{
+      email:{source:'sfmc', medium:'email'},
+      sms:{source:'sfmc', medium:'sms'},
+      meta:{source:'meta', medium:'paid_social'},
+      facebook:{source:'facebook', medium:'paid_social'},
+      instagram:{source:'instagram', medium:'paid_social'},
+      google_ads:{source:'google', medium:'cpc'},
+      ms_ads:{source:'bing', medium:'cpc'}
+    },
+    tilfoejParametre(urlStr,parametre,anker){
+      if(!/^https?:\/\//i.test(urlStr)) urlStr='https://'+urlStr;
+      const url=new URL(urlStr);
+      Object.entries(parametre).forEach(([k,v])=>{
+        if(v && !url.searchParams.has(k)) url.searchParams.set(k,v);
+      });
+      if(anker) url.hash=anker;
+      return url.toString();
+    },
+    genererLinks(){
+      this.links=[];
+      if(!this.basisUrl || !this.kampagne) return this.vis('Indtast URL og kampagne');
+      const utm_source=this.kanalMap[this.kanal].source;
+      const utm_medium=this.kanalMap[this.kanal].medium;
+      if(this.flereVersioner){
+        for(let i=1;i<=this.antalVersioner;i++){
+          const contentVersion=this.indhold?`${this.indhold}-${i}`:`${i}`;
+          const params={utm_source,utm_medium,utm_campaign:this.kampagne,utm_content:contentVersion};
+          this.links.push({url:this.tilfoejParametre(this.basisUrl,params,this.anker),...params,anker:this.anker});
+        }
+      }else{
+        const params={utm_source,utm_medium,utm_campaign:this.kampagne,utm_content:this.indhold||undefined};
+        this.links.push({url:this.tilfoejParametre(this.basisUrl,params,this.anker),...params,anker:this.anker});
+      }
+    },
+    kopier(link){navigator.clipboard.writeText(link.url).then(()=>this.vis('Link kopieret!'));},
+    kopierAlle(){navigator.clipboard.writeText(this.links.map(l=>l.url).join('\n')).then(()=>this.vis('Alle links kopieret!'));},
+    aabn(url){window.open(url,'_blank');},
+    downloadCSV(){
+      const header=['url','utm_source','utm_medium','utm_campaign','utm_content','anker'];
+      const rows=this.links.map(l=>[l.url,l.utm_source,l.utm_medium,l.utm_campaign,l.utm_content||'',l.anker||''].map(s=>`"${s.replace(/"/g,'""')}"`).join(','));
+      const csv=[header.join(','),...rows].join('\n');
+      const blob=new Blob([csv],{type:'text/csv'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='utm_links.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    },
+    vis(msg){this.notifikationBesked=msg;this.visNotifikation=true;setTimeout(()=>this.visNotifikation=false,2000);}
+  }
+}
+</script>
+</body>
+</html>
