@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
 <meta charset="UTF-8">
-<title>UTM Builder Pro - Alpine</title>
+<title>MSF UTM Helper</title>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.0/dist/cdn.min.js" defer></script>
 <style>
 body { font-family: 'Segoe UI', Arial, sans-serif; margin:20px; background:#fafafa; color:#1e1e1e; }
@@ -66,6 +66,11 @@ input:checked + .slider:before { transform: translateX(22px); }
   </div>
 
   <div class="field">
+    <label>Campaign Code (valgfri)</label>
+    <input type="text" x-model="campaigncode" placeholder="Fx: spring2025">
+  </div>
+
+  <div class="field">
     <label>Anker (valgfri)</label>
     <select x-model="anker">
       <option value="">Intet</option>
@@ -100,6 +105,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         <th>utm_medium</th>
         <th>utm_campaign</th>
         <th>utm_content</th>
+        <th>Campaign Code</th>
         <th>Anker</th>
         <th>Handlinger</th>
       </tr>
@@ -112,6 +118,7 @@ input:checked + .slider:before { transform: translateX(22px); }
           <td x-text="link.utm_medium"></td>
           <td x-text="link.utm_campaign"></td>
           <td x-text="link.utm_content || ''"></td>
+          <td x-text="link.campaigncode || ''"></td>
           <td x-text="link.anker || ''"></td>
           <td>
             <div style="display:inline-flex; gap:6px;">
@@ -134,6 +141,7 @@ function utmBuilder() {
     kanal:'email',
     kampagne:'',
     indhold:'',
+    campaigncode:'',
     anker:'',
     flereVersioner:false,
     antalVersioner:3,
@@ -155,6 +163,7 @@ function utmBuilder() {
       Object.entries(parametre).forEach(([k,v])=>{
         if(v && !url.searchParams.has(k)) url.searchParams.set(k,v);
       });
+      if(this.campaigncode) url.searchParams.set('campaigncode', this.campaigncode); // add campaigncode
       if(anker) url.hash=anker;
       return url.toString();
     },
@@ -167,19 +176,19 @@ function utmBuilder() {
         for(let i=1;i<=this.antalVersioner;i++){
           const contentVersion=this.indhold?`${this.indhold}-${i}`:`${i}`;
           const params={utm_source,utm_medium,utm_campaign:this.kampagne,utm_content:contentVersion};
-          this.links.push({url:this.tilfoejParametre(this.basisUrl,params,this.anker),...params,anker:this.anker});
+          this.links.push({url:this.tilfoejParametre(this.basisUrl,params,this.anker),...params,anker:this.anker,campaigncode:this.campaigncode});
         }
       }else{
         const params={utm_source,utm_medium,utm_campaign:this.kampagne,utm_content:this.indhold||undefined};
-        this.links.push({url:this.tilfoejParametre(this.basisUrl,params,this.anker),...params,anker:this.anker});
+        this.links.push({url:this.tilfoejParametre(this.basisUrl,params,this.anker),...params,anker:this.anker,campaigncode:this.campaigncode});
       }
     },
     kopier(link){navigator.clipboard.writeText(link.url).then(()=>this.vis('Link kopieret!'));},
     kopierAlle(){navigator.clipboard.writeText(this.links.map(l=>l.url).join('\n')).then(()=>this.vis('Alle links kopieret!'));},
     aabn(url){window.open(url,'_blank');},
     downloadCSV(){
-      const header=['url','utm_source','utm_medium','utm_campaign','utm_content','anker'];
-      const rows=this.links.map(l=>[l.url,l.utm_source,l.utm_medium,l.utm_campaign,l.utm_content||'',l.anker||''].map(s=>`"${s.replace(/"/g,'""')}"`).join(','));
+      const header=['url','utm_source','utm_medium','utm_campaign','utm_content','campaigncode','anker'];
+      const rows=this.links.map(l=>[l.url,l.utm_source,l.utm_medium,l.utm_campaign,l.utm_content||'',l.campaigncode||'',l.anker||''].map(s=>`"${s.replace(/"/g,'""')}"`).join(','));
       const csv=[header.join(','),...rows].join('\n');
       const blob=new Blob([csv],{type:'text/csv'});
       const a=document.createElement('a');
