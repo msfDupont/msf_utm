@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
 <meta charset="UTF-8">
-<title>MSF UTM Helper</title>
+<title>UTM Builder Pro - Alpine</title>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.0/dist/cdn.min.js" defer></script>
 <style>
 body { font-family: 'Segoe UI', Arial, sans-serif; margin:20px; background:#fafafa; color:#1e1e1e; }
@@ -66,8 +66,10 @@ input:checked + .slider:before { transform: translateX(22px); }
   </div>
 
   <div class="field">
-    <label>Kampagnekode (valgfri)</label>
-    <input type="text" x-model="campaigncode" placeholder="F.eks: 3799">
+    <label>Campaign Code (4 cifre, valgfri)</label>
+    <input type="text" x-model="campaigncode" placeholder="Fx: 2025"
+           @input="campaigncode = campaigncode.replace(/\D/g,'').slice(0,4).trim()">
+    <span class="tooltip">Kun 4 cifre tilladt, ingen mellemrum</span>
   </div>
 
   <div class="field">
@@ -141,7 +143,7 @@ function utmBuilder() {
     kanal:'email',
     kampagne:'',
     indhold:'',
-    campaigncode:'',
+    campaigncode:'', // <-- max 4 digits
     anker:'',
     flereVersioner:false,
     antalVersioner:3,
